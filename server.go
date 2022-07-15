@@ -86,7 +86,7 @@ func serve() {
 	}
 
 	// start a tcp server
-	listener, err := tls.Listen("tcp", "0.0.0.0:8080", &config)
+	listener, err := tls.Listen("tcp", "0.0.0.0:443", &config)
 	if err != nil {
 		fmt.Println("server: could not start listening, error:", err)
 		return
