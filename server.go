@@ -13,7 +13,7 @@ import (
 
 func handleError(err error) {
 	if err != nil {
-		log.Fatal("Fatal", err)
+		log.Println("Error, ", err)
 	}
 }
 
