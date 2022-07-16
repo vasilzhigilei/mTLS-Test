@@ -3,7 +3,6 @@ package main
 import (
 	"crypto/tls"
 	"crypto/x509"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"path/filepath"
@@ -78,50 +77,50 @@ func serve() {
 	handleError(err)
 
 	config := tls.Config{
-		ClientAuth:               tls.RequireAndVerifyClientCert, // maybe don't verify if issues arise
-		ClientCAs:                clientCertPool,
-		Certificates:             []tls.Certificate{*certificate},
-		PreferServerCipherSuites: true,
-		MinVersion:               tls.VersionTLS12,
+		ClientAuth:         tls.RequestClientCert, // set to tls.RequireAndVerifyClientCert if you want the chain to be verified (if not valid, you won't get to see the client cert data sent to server- handshake will fail first)
+		ClientCAs:          clientCertPool,
+		Certificates:       []tls.Certificate{*certificate},
+		MinVersion:         tls.VersionTLS12,
+		InsecureSkipVerify: true, // true == accept any cert from origin server (if you self-signed your origin certs- this is unrelated to mTLS)
 	}
 
 	// start a tcp server
 	listener, err := tls.Listen("tcp", "0.0.0.0:443", &config)
 	if err != nil {
-		fmt.Println("server: could not start listening, error:", err)
+		log.Printf("server: could not start listening, error: %s\n", err)
 		return
 	}
-
-	fmt.Println("server: ready")
+	log.Printf("server: ready\n")
 
 	for {
 		// wait for a new incoming connection
 		conn, err := listener.Accept()
 		if err != nil {
-			fmt.Println("server: could not accept incoming connection, error:", err)
+			log.Printf("server: could not accept incoming connection, error: %s\n", err)
 			continue
 		}
 		// we got a connection
-		fmt.Println("server: accepted connection from", conn.RemoteAddr())
+		log.Printf("server: accepted connection from: %s\n", conn.RemoteAddr())
 
 		// get the underlying tls connection
 		tlsConn, ok := conn.(*tls.Conn)
 		if !ok {
-			fmt.Println("server: erm, this is not a tls conn")
-			return
+			log.Printf("server: erm, this is not a tls conn\n")
 		}
 		// perform handshake
 		if err := tlsConn.Handshake(); err != nil {
-			fmt.Println("client: error during handshake, error:", err)
-			return
+			log.Printf("client: error during handshake, error: %s\n", err)
 		}
 
+		tlsConn.ConnectionState()
 		// get connection state and print some stuff
 		state := tlsConn.ConnectionState()
 		for _, v := range state.PeerCertificates {
-			text, err := certinfo.CertificateText(v)
-			handleError(err)
-			fmt.Printf("Cert data: %s\n", text)
+			text, err := certinfo.CertificateText(v) // this library can only give the entire human-readable cert, cannot select specific parts
+			if err != nil {
+				log.Printf("server: error converting cert to human-readable format, error: %s\n", err)
+			}
+			log.Printf("Cert data: %s\n", text)
 		}
 
 		// close connection
