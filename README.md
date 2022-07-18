@@ -15,6 +15,6 @@ Place your certificates in a `certs/` folder
 ## Test
 Example curl command (replace local address with your server address):
 
-`curl https://127.0.0.1:443/ --cert leaf_intermediate.pem --key leaf.key -k`
+`curl https://127.0.0.1:443/ --cert leaf.pem --key leaf.key -k`
 
 **Note for Cloudflare Warp users: you may have to disable Cloudflare Warp if you're trying to curl to a remote server running this code**
