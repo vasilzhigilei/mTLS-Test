@@ -3,6 +3,7 @@ package main
 import (
 	"crypto/tls"
 	"crypto/x509"
+	"flag"
 	"io/ioutil"
 	"log"
 	"path/filepath"
@@ -11,6 +12,12 @@ import (
 )
 
 func main() {
+	// flag for whether to print full cert details or just minimal details
+	verbose := flag.Bool("verbose", false, "Verbose==true prints out entire client certificates in human-readable format.")
+	// set port
+	port := flag.String("port", "443", "Set port to listen on.")
+	flag.Parse()
+
 	// get the origin server cert pair for TLS
 	certificate, err := getOriginCertPair("certs/origin.pem", "certs/origin.key")
 	handleError(err)
@@ -28,9 +35,10 @@ func main() {
 	}
 
 	// start a tcp server
-	listener, err := tls.Listen("tcp", "0.0.0.0:443", &config)
+	listener, err := tls.Listen("tcp", "0.0.0.0:"+*port, &config)
 	if err != nil {
 		log.Printf("server: could not start listening, error: %s\n", err)
+		log.Printf("try running the server with the -port=# flag to listen on another port\n")
 		return
 	}
 	log.Printf("server: ready\n")
@@ -59,11 +67,14 @@ func main() {
 		// get connection state and print certs sent by client
 		state := tlsConn.ConnectionState()
 		for _, v := range state.PeerCertificates {
-			text, err := certinfo.CertificateText(v) // this library can only give the entire human-readable cert, cannot specific select parts
-			if err != nil {
-				log.Printf("server: error converting cert to human-readable format, error: %s\n", err)
+			log.Printf(" * Client cert: Subject: %s, Issuer: %s\n", v.Subject, v.Issuer)
+			if *verbose {
+				text, err := certinfo.CertificateText(v) // this library can only give the entire human-readable cert, cannot specific select parts
+				if err != nil {
+					log.Printf("server: error converting cert to human-readable format, error: %s\n", err)
+				}
+				log.Printf("Cert data:\n%s\n", text)
 			}
-			log.Printf("Cert data: %s\n", text)
 		}
 
 		// close connection
