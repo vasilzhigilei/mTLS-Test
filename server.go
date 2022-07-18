@@ -24,7 +24,7 @@ func main() {
 		ClientCAs:          clientCertPool,
 		Certificates:       []tls.Certificate{*certificate},
 		MinVersion:         tls.VersionTLS12,
-		InsecureSkipVerify: true, // true == accept any cert from origin server (if you self-signed your origin certs- this is unrelated to mTLS)
+		InsecureSkipVerify: true, // true == accept any cert from origin server (used if you self-signed your origin certs) (this is unrelated to mutual authentication)
 	}
 
 	// start a tcp server
