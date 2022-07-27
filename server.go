@@ -87,7 +87,7 @@ func main() {
 				log.Printf("Cert data:\n%s\n", text)
 			}
 		}
-
+		log.Println("Did resume? ", tlsConn.ConnectionState().DidResume)
 		// close connection
 		conn.Close()
 
