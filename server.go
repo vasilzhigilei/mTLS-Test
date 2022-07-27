@@ -27,7 +27,7 @@ func main() {
 	handleError(err)
 
 	config := tls.Config{
-		ClientAuth:         tls.RequestClientCert, // set to tls.RequireAndVerifyClientCert if you want the chain to be verified (if not valid, you won't get to see the client cert data sent to server- handshake will fail first)
+		ClientAuth:         tls.RequireAndVerifyClientCert, // set to tls.RequireAndVerifyClientCert if you want the chain to be verified (if not valid, you won't get to see the client cert data sent to server- handshake will fail first)
 		ClientCAs:          clientCertPool,
 		Certificates:       []tls.Certificate{*certificate},
 		MinVersion:         tls.VersionTLS12,
@@ -66,8 +66,19 @@ func main() {
 		tlsConn.ConnectionState()
 		// get connection state and print certs sent by client
 		state := tlsConn.ConnectionState()
+
+		log.Printf("Certs from state.VerifiedChains\n")
+		for _, list := range state.VerifiedChains {
+			log.Printf("VERIFIED\n")
+			for _, v := range list {
+				log.Printf(" * Verified cert: Subject %s, Issuer: %s\n", v.Subject, v.Issuer)
+			}
+		}
+
+		log.Printf("Certs from state.PeerCertificates\n")
 		for _, v := range state.PeerCertificates {
 			log.Printf(" * Client cert: Subject: %s, Issuer: %s\n", v.Subject, v.Issuer)
+
 			if *verbose {
 				text, err := certinfo.CertificateText(v) // this library can only give the entire human-readable cert, cannot specific select parts
 				if err != nil {
@@ -79,6 +90,8 @@ func main() {
 
 		// close connection
 		conn.Close()
+
+		log.Println()
 	}
 }
 
